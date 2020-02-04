@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nsc/cmd/store"
 	"github.com/spf13/cobra"
 )
@@ -78,12 +78,13 @@ func (p *DescribeFile) Load(ctx ActionCtx) error {
 		if err != nil {
 			return err
 		}
-		gc, err := jwt.DecodeGeneric(p.token)
-		if err != nil {
-			return err
-		}
-		p.kind = gc.Type
 	}
+
+	gc, err := jwt.Decode(p.token)
+	if err != nil {
+		return err
+	}
+	p.kind = gc.ClaimType()
 	return nil
 }
 

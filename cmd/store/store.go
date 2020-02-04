@@ -32,7 +32,7 @@ import (
 	"time"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 )
 
@@ -185,15 +185,13 @@ func (s *Store) createOperatorToken(operator *NamedKey) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error reading public key: %v", err)
 	}
-
-	var v = jwt.NewGenericClaims(string(pub))
-	s.Info.Kind = jwt.OperatorClaim
-	v.Name = operator.Name
-	v.Type = jwt.OperatorClaim
-
 	if !nkeys.IsValidPublicOperatorKey(pub) {
 		return "", fmt.Errorf("unsupported key type %q - stores require operator nkeys", pub)
 	}
+
+	var v = jwt.NewOperatorClaims(pub)
+	s.Info.Kind = jwt.OperatorClaim
+	v.Name = operator.Name
 
 	token, err := v.Encode(operator.KP)
 	if err != nil {
@@ -327,14 +325,15 @@ func (s *Store) ListEntries(name ...string) ([]string, error) {
 
 func (s *Store) ClaimType(data []byte) (*jwt.ClaimType, error) {
 	// Decode the jwt to figure out where it goes
-	gc, err := jwt.DecodeGeneric(string(data))
+	c, err := jwt.Decode(string(data))
 	if err != nil {
 		return nil, fmt.Errorf("invalid jwt: %v", err)
 	}
-	if gc.Name == "" {
+	if c.Claims().Name == "" {
 		return nil, errors.New("jwt claim doesn't have a name")
 	}
-	return &gc.Type, nil
+	kind := c.ClaimType()
+	return &kind, nil
 }
 
 func PullAccount(u string) (Status, error) {
@@ -543,6 +542,18 @@ func (s *Store) loadJson(v interface{}, name ...string) error {
 	return nil
 }
 
+func (s *Store) Load(name ...string) (jwt.Claims, error) {
+	if s.Has(name...) {
+		d, err := s.Read(name...)
+		if err != nil {
+			return nil, err
+		}
+		return jwt.Decode(string(d))
+	}
+	return nil, nil
+}
+
+// Deprecated: use Load
 func (s *Store) LoadClaim(name ...string) (*jwt.GenericClaims, error) {
 	if s.Has(name...) {
 		d, err := s.Read(name...)
@@ -628,6 +639,15 @@ func (s *Store) ReadRawUserClaim(accountName string, name string) ([]byte, error
 	return nil, NewUserNotExistErr(name)
 }
 
+func (s *Store) LoadOperator() (jwt.Claims, error) {
+	fn := JwtName(s.GetName())
+	if s.Has(fn) {
+		return s.Load(fn)
+	}
+	return nil, nil
+}
+
+// Deprecated: use LoadOperator()
 func (s *Store) LoadRootClaim() (*jwt.GenericClaims, error) {
 	fn := JwtName(s.GetName())
 	if s.Has(fn) {
@@ -636,6 +656,34 @@ func (s *Store) LoadRootClaim() (*jwt.GenericClaims, error) {
 	return nil, nil
 }
 
+func (s *Store) LoadDefault(kind string) (jwt.Claims, error) {
+	dirs, err := s.ListSubContainers(kind)
+	if err != nil {
+		return nil, fmt.Errorf("error listing %s: %v", kind, err)
+	}
+	if len(dirs) == 1 {
+		return s.Load(kind, dirs[0], JwtName(dirs[0]))
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get pwd: %v", err)
+	}
+
+	for _, n := range dirs {
+		tp := filepath.Join(s.Dir, kind, n)
+		if strings.HasPrefix(pwd, tp) {
+			if s.Has(kind, filepath.Base(pwd), JwtName(filepath.Base(pwd))) {
+				return s.Load(kind, filepath.Base(pwd), JwtName(filepath.Base(pwd)))
+			} else {
+				continue
+			}
+		}
+	}
+	return nil, nil
+}
+
+// Deprecated: use LoadDefault
 func (s *Store) LoadDefaultEntity(kind string) (*jwt.GenericClaims, error) {
 	dirs, err := s.ListSubContainers(kind)
 	if err != nil {
@@ -739,19 +787,19 @@ func (s *Store) GetContext() (*Context, error) {
 	}
 
 	// try to set a default account
-	var ac *jwt.GenericClaims
+	var ac jwt.Claims
 
 	if s.DefaultAccount != "" {
-		ac, err = s.LoadClaim(Accounts, s.DefaultAccount, JwtName(s.DefaultAccount))
+		ac, err = s.Load(Accounts, s.DefaultAccount, JwtName(s.DefaultAccount))
 	} else {
-		ac, err = s.LoadDefaultEntity(Accounts)
+		ac, err = s.LoadDefault(Accounts)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 	if ac != nil {
-		c.SetContext(ac.Name, ac.Subject)
+		c.SetContext(ac.Claims().Name, ac.Claims().Subject)
 	}
 	return &c, nil
 }

@@ -23,7 +23,7 @@ import (
 	"github.com/nats-io/nsc/cmd/store"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -74,25 +74,17 @@ func (j *PullJob) Token() (string, error) {
 		return "", err
 	}
 	j.PullStatus.Data = []byte(token)
-	gc, err := jwt.DecodeGeneric(token)
+	gc, err := jwt.Decode(token)
 	if err != nil {
 		return "", err
 	}
-	switch gc.Type {
-	case jwt.AccountClaim:
-		_, err := jwt.DecodeAccountClaims(token)
-		if err != nil {
-			return "", err
-		}
+	switch gc.(type) {
+	case *jwt.OperatorClaims:
 		return token, nil
-	case jwt.OperatorClaim:
-		_, err := jwt.DecodeOperatorClaims(token)
-		if err != nil {
-			return "", err
-		}
+	case *jwt.AccountClaims:
 		return token, nil
 	default:
-		return "", fmt.Errorf("unsupported token type: %q", gc.Type)
+		return "", fmt.Errorf("unsupported token type: %q", gc.ClaimType())
 	}
 }
 
@@ -229,13 +221,13 @@ func (p *PullParams) Run(ctx ActionCtx) (store.Status, error) {
 		}
 		if j.PullStatus.OK() {
 			token, _ := j.Token()
-			remoteClaim, err := jwt.DecodeGeneric(token)
+			remoteClaim, err := jwt.Decode(token)
 			if err != nil {
 				sub.AddError("error decoding remote token for %q: %v", j.Name, err)
 				continue
 			}
 			orig := j.LocalClaim.Claims().IssuedAt
-			remote := remoteClaim.IssuedAt
+			remote := remoteClaim.Claims().IssuedAt
 			if (orig > remote) && !p.Overwrite {
 				sub.AddError("local jwt for %q is newer than remote version - specify --force to overwrite", j.Name)
 				continue
@@ -244,7 +236,7 @@ func (p *PullParams) Run(ctx ActionCtx) (store.Status, error) {
 				sub.AddError("error storing %q: %v", j.Name, err)
 				continue
 			}
-			sub.AddOK("stored %s %q", remoteClaim.Type, j.Name)
+			sub.AddOK("stored %s %q", remoteClaim.ClaimType(), j.Name)
 			if sub.OK() {
 				sub.Label = fmt.Sprintf("pulled %q from the account server", j.Name)
 			}

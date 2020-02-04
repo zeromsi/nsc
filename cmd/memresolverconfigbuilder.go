@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nsc/cmd/store"
 )
 
@@ -54,26 +54,18 @@ func (cb *MemResolverConfigBuilder) SetSystemAccount(id string) error {
 
 func (cb *MemResolverConfigBuilder) Add(rawClaim []byte) error {
 	token := string(rawClaim)
-	gc, err := jwt.DecodeGeneric(token)
+	gc, err := jwt.Decode(token)
 	if err != nil {
 		return err
 	}
-	switch gc.Type {
-	case jwt.OperatorClaim:
-		oc, err := jwt.DecodeOperatorClaims(token)
-		if err != nil {
-			return err
-		}
+	switch v := gc.(type) {
+	case *jwt.OperatorClaims:
 		cb.operator = token
-		cb.pubToName[oc.Subject] = oc.Name
-		cb.pubToName["__OPERATOR__"] = oc.Subject
-	case jwt.AccountClaim:
-		ac, err := jwt.DecodeAccountClaims(token)
-		if err != nil {
-			return err
-		}
-		cb.claims[ac.Subject] = token
-		cb.pubToName[ac.Subject] = ac.Name
+		cb.pubToName[v.Subject] = v.Name
+		cb.pubToName["__OPERATOR__"] = v.Subject
+	case *jwt.AccountClaims:
+		cb.claims[v.Subject] = token
+		cb.pubToName[v.Subject] = v.Name
 	}
 	return nil
 }
