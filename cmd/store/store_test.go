@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	"github.com/stretchr/testify/require"
 )
@@ -172,20 +172,25 @@ func TestLoadOperator(t *testing.T) {
 func TestStoreOperator(t *testing.T) {
 	_, _, kp := CreateOperatorKey(t)
 	s := CreateTestStoreForOperator(t, "x", kp)
-	c, err := s.LoadClaim("x.jwt")
+	c, err := s.Load("x.jwt")
 	require.NoError(t, err)
-	require.NotNil(t, c)
-	require.Empty(t, c.Tags)
 
-	c.Tags.Add("A", "B", "C")
+	oc, ok := c.(*jwt.OperatorClaims)
+	require.True(t, ok)
+	require.Empty(t, oc.Operator.Tags)
+
+	oc.Tags.Add("A", "B", "C")
 	token, err := c.Encode(kp)
 	require.NoError(t, err)
 
 	_, err = s.StoreClaim([]byte(token))
 	require.NoError(t, err)
-	c, err = s.LoadClaim("x.jwt")
+
+	c, err = s.Load("x.jwt")
 	require.NoError(t, err)
-	require.Len(t, c.Tags, 3)
+	oc, ok = c.(*jwt.OperatorClaims)
+	require.True(t, ok)
+	require.Len(t, oc.Tags, 3)
 }
 
 func TestStoreAccount(t *testing.T) {
@@ -200,10 +205,12 @@ func TestStoreAccount(t *testing.T) {
 	_, err = s.StoreClaim([]byte(cd))
 	require.NoError(t, err)
 
-	gc, err := s.LoadClaim(Accounts, "foo", "foo.jwt")
+	rc, err := s.Load(Accounts, "foo", "foo.jwt")
 	require.NoError(t, err)
-	require.NotNil(t, gc)
-	require.Equal(t, gc.Name, "foo")
+
+	ac, ok := rc.(*jwt.AccountClaims)
+	require.True(t, ok)
+	require.Equal(t, ac.Name, "foo")
 }
 
 func TestStoreAccountWithSigningKey(t *testing.T) {
@@ -233,10 +240,11 @@ func TestStoreAccountWithSigningKey(t *testing.T) {
 	_, err = s.StoreClaim([]byte(cd))
 	require.NoError(t, err)
 
-	gc, err := s.LoadClaim(Accounts, "foo", "foo.jwt")
+	gc, err := s.Load(Accounts, "foo", "foo.jwt")
 	require.NoError(t, err)
-	require.NotNil(t, gc)
-	require.Equal(t, gc.Name, "foo")
+	ac, ok := gc.(*jwt.AccountClaims)
+	require.True(t, ok)
+	require.Equal(t, ac.Name, "foo")
 	require.True(t, oc.DidSign(gc))
 }
 
@@ -262,10 +270,11 @@ func TestStoreUser(t *testing.T) {
 	_, err = s.StoreClaim([]byte(ud))
 	require.NoError(t, err)
 
-	gc, err := s.LoadClaim(Accounts, "foo", Users, "bar.jwt")
+	gc, err := s.Load(Accounts, "foo", Users, "bar.jwt")
 	require.NoError(t, err)
-	require.NotNil(t, gc)
-	require.Equal(t, gc.Name, "bar")
+	uc, ok := gc.(*jwt.UserClaims)
+	require.True(t, ok)
+	require.Equal(t, uc.Name, "bar")
 }
 
 func TestStoreUserWithSigningKeys(t *testing.T) {
@@ -292,10 +301,11 @@ func TestStoreUserWithSigningKeys(t *testing.T) {
 	_, err = s.StoreClaim([]byte(ud))
 	require.NoError(t, err)
 
-	gc, err := s.LoadClaim(Accounts, "foo", Users, "bar.jwt")
+	gc, err := s.Load(Accounts, "foo", Users, "bar.jwt")
 	require.NoError(t, err)
-	require.NotNil(t, gc)
-	require.Equal(t, gc.Name, "bar")
+	uc, ok := gc.(*jwt.UserClaims)
+	require.True(t, ok)
+	require.Equal(t, uc.Name, "bar")
 	require.True(t, ac.DidSign(uc))
 }
 

@@ -23,7 +23,7 @@ import (
 	"github.com/nats-io/nsc/cmd/store"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -92,11 +92,11 @@ func (p *DescribeFile) Load(ctx ActionCtx) error {
 		}
 	}
 
-	gc, err := jwt.DecodeGeneric(p.token)
+	gc, err := jwt.Decode(p.token)
 	if err != nil {
 		return err
 	}
-	p.kind = gc.Type
+	p.kind = gc.ClaimType()
 	return nil
 }
 

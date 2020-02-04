@@ -59,6 +59,8 @@ github.com/mitchellh/mapstructure
 github.com/nats-io/cliprompts/v2
 # github.com/nats-io/jwt v0.3.2
 github.com/nats-io/jwt
+# github.com/nats-io/jwt/v2 v2.0.0-20200204143300-1476a208a3fe
+github.com/nats-io/jwt/v2
 # github.com/nats-io/nats-server/v2 v2.0.1-0.20190625001713-2db76bde3329
 github.com/nats-io/nats-server/v2/conf
 github.com/nats-io/nats-server/v2/logger
@@ -94,7 +96,7 @@ github.com/spf13/jwalterweatherman
 github.com/spf13/pflag
 # github.com/spf13/viper v1.2.1
 github.com/spf13/viper
-# github.com/stretchr/testify v1.2.2
+# github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/tcnksm/go-gitconfig v0.1.2

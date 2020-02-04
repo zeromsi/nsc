@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	"github.com/nats-io/nsc/cmd/store"
 )
@@ -177,10 +177,8 @@ func (c *Entity) GenerateClaim(signer nkeys.KeyPair, ctx ActionCtx) (store.Statu
 		if ctx.Account.PublicKey != spk {
 			uc.IssuerAccount = ctx.Account.PublicKey
 		}
-	case nkeys.PrefixByteCluster:
-		claim = jwt.NewClusterClaims(pub)
-	case nkeys.PrefixByteServer:
-		claim = jwt.NewServerClaims(pub)
+	default:
+		return nil, fmt.Errorf("unsupported entity type %q", pub)
 	}
 	d := claim.Claims()
 	d.Name = c.name

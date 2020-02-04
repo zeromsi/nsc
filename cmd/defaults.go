@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/nats-io/nsc/cmd/store"

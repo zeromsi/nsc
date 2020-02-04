@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 )
 
 type NKeyConfigBuilder struct {
@@ -53,23 +53,15 @@ func (cb *NKeyConfigBuilder) SetSystemAccount(id string) error {
 
 func (cb *NKeyConfigBuilder) Add(rawClaim []byte) error {
 	token := string(rawClaim)
-	gc, err := jwt.DecodeGeneric(token)
+	gc, err := jwt.Decode(token)
 	if err != nil {
 		return err
 	}
-	switch gc.Type {
-	case jwt.AccountClaim:
-		ac, err := jwt.DecodeAccountClaims(token)
-		if err != nil {
-			return err
-		}
-		cb.AddClaim(ac)
-	case jwt.UserClaim:
-		uc, err := jwt.DecodeUserClaims(token)
-		if err != nil {
-			return err
-		}
-		cb.AddClaim(uc)
+	switch v := gc.(type) {
+	case *jwt.AccountClaims:
+		cb.AddClaim(v)
+	case *jwt.UserClaims:
+		cb.AddClaim(v)
 	}
 	return nil
 }

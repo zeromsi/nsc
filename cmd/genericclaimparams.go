@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	cli "github.com/nats-io/cliprompts/v2"
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nsc/cmd/store"
 )
 
@@ -126,18 +126,35 @@ func (sp *GenericClaimsParams) Run(ctx ActionCtx, claim jwt.Claims, r *store.Rep
 		}
 	}
 
-	cd.Tags.Add(sp.tags...)
-	cd.Tags.Remove(sp.rmTags...)
-	sort.Strings(cd.Tags)
+	gf := GetGenericFields(claim)
+	if gf != nil {
+		gf.Tags.Add(sp.tags...)
+		gf.Tags.Remove(sp.rmTags...)
+		sort.Strings(gf.Tags)
 
-	if r != nil {
-		for _, t := range sp.tags {
-			r.AddOK("added tag %q", strings.ToLower(t))
-		}
-		for _, t := range sp.rmTags {
-			r.AddOK("removed tag %q", strings.ToLower(t))
+		if r != nil {
+			for _, t := range sp.tags {
+				r.AddOK("added tag %q", strings.ToLower(t))
+			}
+			for _, t := range sp.rmTags {
+				r.AddOK("removed tag %q", strings.ToLower(t))
+			}
 		}
 	}
-	sort.Strings(cd.Tags)
 	return nil
+}
+
+func GetGenericFields(c jwt.Claims) *jwt.GenericFields {
+	switch v := c.(type) {
+	case *jwt.OperatorClaims:
+		return &v.Operator.GenericFields
+	case *jwt.AccountClaims:
+		return &v.Account.GenericFields
+	case *jwt.UserClaims:
+		return &v.User.GenericFields
+	case *jwt.ActivationClaims:
+		return &v.Activation.GenericFields
+	default:
+		return nil
+	}
 }

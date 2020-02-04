@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/nats-io/jwt"
+	"github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
 	"github.com/nats-io/nsc/cmd/store"
 	"github.com/nats-io/nuid"
@@ -635,20 +635,22 @@ func (p *FixCmd) loadJwt(fp string) (string, error) {
 	return jwt.ParseDecoratedJWT(d)
 }
 
+//FIXME: changes in the v2 jwt api, can eliminate ReadOperator/Account/UserJWT
+
 func (p *FixCmd) ReadOperatorJwt(fp string) (*jwt.OperatorClaims, string, error) {
 	tok, err := p.loadJwt(fp)
 	if err != nil {
 		return nil, "", err
 	}
-	gc, err := jwt.DecodeGeneric(tok)
+	gc, err := jwt.Decode(tok)
 	if err != nil {
 		return nil, "", err
 	}
-	if gc.Type != jwt.OperatorClaim {
-		return nil, "", nil
+	oc, ok := gc.(*jwt.OperatorClaims)
+	if ok {
+		return oc, tok, err
 	}
-	oc, err := jwt.DecodeOperatorClaims(tok)
-	return oc, tok, err
+	return nil, "", nil
 }
 
 func (p *FixCmd) ReadAccountJwt(fp string) (*jwt.AccountClaims, string, error) {
@@ -656,19 +658,15 @@ func (p *FixCmd) ReadAccountJwt(fp string) (*jwt.AccountClaims, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	gc, err := jwt.DecodeGeneric(tok)
+	gc, err := jwt.Decode(tok)
 	if err != nil {
 		return nil, "", err
 	}
-	if gc.Type != jwt.AccountClaim {
-		return nil, "", nil
+	ac, ok := gc.(*jwt.AccountClaims)
+	if ok {
+		return ac, tok, err
 	}
-
-	ac, err := jwt.DecodeAccountClaims(tok)
-	if err != nil {
-		return nil, "", err
-	}
-	return ac, tok, nil
+	return nil, "", nil
 }
 
 func (p *FixCmd) ReadUserJwt(fp string) (*jwt.UserClaims, string, error) {
@@ -676,18 +674,15 @@ func (p *FixCmd) ReadUserJwt(fp string) (*jwt.UserClaims, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	gc, err := jwt.DecodeGeneric(tok)
+	gc, err := jwt.Decode(tok)
 	if err != nil {
 		return nil, "", err
 	}
-	if gc.Type != jwt.UserClaim {
-		return nil, "", nil
+	uc, ok := gc.(*jwt.UserClaims)
+	if ok {
+		return uc, tok, err
 	}
-	uc, err := jwt.DecodeUserClaims(tok)
-	if err != nil {
-		return nil, "", err
-	}
-	return uc, tok, nil
+	return nil, "", nil
 }
 
 func (p *FixCmd) ReadGenericJwt(fp string) (*jwt.GenericClaims, error) {
