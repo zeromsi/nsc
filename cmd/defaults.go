@@ -169,6 +169,7 @@ func isOperatorDir(dir string) (store.Info, bool, error) {
 }
 
 func LoadOrInit(github string, toolHomeEnvName string) (*ToolConfig, error) {
+
 	var err error
 	if toolHomeEnvName == "" {
 		return nil, errors.New("toolHomeEnv is required")

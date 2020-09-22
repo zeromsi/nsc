@@ -134,6 +134,9 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+	//Routes(New())
+	//srv := New()
+	//srv.Logger.Fatal(srv.Start(":" + ServerPort))
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
