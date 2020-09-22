@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	nats "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
 )
 

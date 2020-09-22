@@ -30,7 +30,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
 
-NSC_REPO_URL = "https://github.com/nats-io/nsc"
+NSC_REPO_URL = "https://github.com/zeromsi/nsc"
 FILENAME_LOOKUP = {
     "darwin": "nsc-darwin-amd64.zip",
     "linux": "nsc-linux-amd64.zip",

@@ -23,7 +23,7 @@ import (
 
 	"github.com/nats-io/nsc/cmd/store"
 
-	nats "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
 )
 

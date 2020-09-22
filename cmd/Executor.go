@@ -7,7 +7,6 @@ import (
 	"os"
 )
 
-
 func ExecuteCmd(root *cobra.Command, args ...string) (stdout string, stderr string, err error) {
 	var stderrBuf, stdoutBuf bytes.Buffer
 	root.SetOutput(&stderrBuf)
@@ -29,7 +28,6 @@ func ExecuteCmd(root *cobra.Command, args ...string) (stdout string, stderr stri
 
 	return stdoutBuf.String(), stderrBuf.String(), err
 }
-
 
 func ResetSharedFlags() {
 	KeyPathFlag = ""

@@ -6,18 +6,18 @@ release:
   name_template: '{{.Tag}}'
   draft: true
 builds:
-- id: nsc
-  main: ./main.go
-  ldflags: "-X main.version={{.Tag}}"
-  env:
-    - CGO_ENABLED=0
-  binary: nsc
-  goos:
-  - darwin
-  - linux
-  - windows
-  goarch:
-  - amd64
+  - id: nsc
+    main: ./main.go
+    ldflags: "-X main.version={{.Tag}}"
+    env:
+      - CGO_ENABLED=0
+    binary: nsc
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
 
 dist: build
 
