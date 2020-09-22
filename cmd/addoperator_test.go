@@ -40,7 +40,7 @@ func Test_AddOperator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, _, err = ExecuteCmd(createAddOperatorCmd(), "--name", "O", "--sys")
+	_, _, err = ExecuteCmd(CreateAddOperatorCmd(), "--name", "O", "--sys")
 	require.NoError(t, err)
 
 	require.FileExists(t, filepath.Join(ts.Dir, "store", "O", ".nsc"))
@@ -63,7 +63,7 @@ func TestImportOperator(t *testing.T) {
 	err = Write(tf, []byte(token))
 	require.NoError(t, err)
 
-	_, _, err = ExecuteCmd(createAddOperatorCmd(), "--url", tf)
+	_, _, err = ExecuteCmd(CreateAddOperatorCmd(), "--url", tf)
 	require.NoError(t, err)
 	storeFile := filepath.Join(ts.Dir, "store", "O", ".nsc")
 	require.FileExists(t, storeFile)
@@ -86,7 +86,7 @@ func TestAddOperatorInteractive(t *testing.T) {
 	ts := NewEmptyStore(t)
 	defer ts.Done(t)
 
-	_, _, err := ExecuteInteractiveCmd(createAddOperatorCmd(), []interface{}{false, "O", "2019-12-01", "2029-12-01", true, true})
+	_, _, err := ExecuteInteractiveCmd(CreateAddOperatorCmd(), []interface{}{false, "O", "2019-12-01", "2029-12-01", true, true})
 	require.NoError(t, err)
 	d, err := Read(filepath.Join(ts.Dir, "store", "O", "O.jwt"))
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestImportOperatorInteractive(t *testing.T) {
 	err = Write(tf, []byte(token))
 	require.NoError(t, err)
 
-	_, _, err = ExecuteInteractiveCmd(createAddOperatorCmd(), []interface{}{true, tf})
+	_, _, err = ExecuteInteractiveCmd(CreateAddOperatorCmd(), []interface{}{true, tf})
 	require.NoError(t, err)
 
 	target := filepath.Join(ts.Dir, "store", "O", "O.jwt")
@@ -150,7 +150,7 @@ func Test_ImportOperatorFromURL(t *testing.T) {
 	u, err := url.Parse(hts.URL)
 	require.NoError(t, err)
 	u.Path = fmt.Sprintf("/jwt/v1/operators/%s", pub)
-	_, _, err = ExecuteCmd(createAddOperatorCmd(), "--url", u.String())
+	_, _, err = ExecuteCmd(CreateAddOperatorCmd(), "--url", u.String())
 	require.NoError(t, err)
 
 	ts.SwitchOperator(t, "O")
@@ -165,7 +165,7 @@ func Test_AddOperatorWithKey(t *testing.T) {
 	defer ts.Done(t)
 
 	seed, pub, _ := CreateOperatorKey(t)
-	cmd := createAddOperatorCmd()
+	cmd := CreateAddOperatorCmd()
 	HoistRootFlags(cmd)
 	_, _, err := ExecuteCmd(cmd, "--name", "T", "-K", string(seed))
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func Test_AddOperatorWithKeyInteractive(t *testing.T) {
 	defer ts.Done(t)
 
 	seed, pub, _ := CreateOperatorKey(t)
-	cmd := createAddOperatorCmd()
+	cmd := CreateAddOperatorCmd()
 	HoistRootFlags(cmd)
 
 	args := []interface{}{false, "T", "0", "0", false, false, string(seed)}
@@ -218,7 +218,7 @@ func Test_AddWellKnownOperator(t *testing.T) {
 	wellKnownOperators = ops
 
 	// add the well known operator
-	_, _, err = ExecuteCmd(createAddOperatorCmd(), "--url", "T")
+	_, _, err = ExecuteCmd(CreateAddOperatorCmd(), "--url", "T")
 	require.NoError(t, err)
 
 	ts.SwitchOperator(t, "T")
@@ -232,7 +232,7 @@ func Test_AddNotWellKnownOperator(t *testing.T) {
 	defer ts.Done(t)
 
 	// add the well known operator
-	_, _, err := ExecuteCmd(createAddOperatorCmd(), "--url", "X")
+	_, _, err := ExecuteCmd(CreateAddOperatorCmd(), "--url", "X")
 	require.Error(t, err)
 }
 
@@ -240,7 +240,7 @@ func Test_AddOperatorNameArg(t *testing.T) {
 	ts := NewTestStore(t, "O")
 	defer ts.Done(t)
 
-	_, _, err := ExecuteCmd(HoistRootFlags(createAddOperatorCmd()), "X")
+	_, _, err := ExecuteCmd(HoistRootFlags(CreateAddOperatorCmd()), "X")
 	require.NoError(t, err)
 	ts.SwitchOperator(t, "X")
 

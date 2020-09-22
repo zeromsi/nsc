@@ -44,7 +44,7 @@ set -eu
 readonly RELEASE_ARCH="amd64"
 
 # Finding the releases to download
-readonly GITHUB_OWNER_REPO='nats-io/nsc'
+readonly GITHUB_OWNER_REPO='zeromsi/nsc'
 readonly HTTP_USER_AGENT='nsc_install/0.1 (@nats-io)'
 
 # Where to install to, relative to home-dir

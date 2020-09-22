@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-
 	"github.com/nats-io/nsc/cmd"
 )
 
@@ -10,6 +9,7 @@ import (
 var version = "0.0.0-dev"
 
 func main() {
+	srv := cmd.New()
 	cmd.SetToolName("nsc")
 	conf, err := cmd.LoadOrInit("nats-io/nsc", cmd.NscHomeEnv)
 	if err != nil {
@@ -17,4 +17,6 @@ func main() {
 	}
 	conf.SetVersion(version)
 	cmd.Execute()
+	cmd.Routes(srv)
+	srv.Logger.Fatal(srv.Start(":" + cmd.ServerPort))
 }
